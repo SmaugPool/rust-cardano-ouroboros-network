@@ -13,23 +13,14 @@
 
 use crate::protocols::Message as MessageOps;
 use crate::{
-    mux::{
-        Channel,
-        Connection,
-    },
+    mux::{Channel, Connection},
     protocols::Agency,
     protocols::Protocol,
     protocols::Values,
     Error,
 };
-use log::{
-    debug,
-    error,
-};
-use serde_cbor::{
-    Value,
-    Value::*,
-};
+use log::{debug, error};
+use serde_cbor::{Value, Value::*};
 use std::convert::TryFrom;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -62,9 +53,14 @@ impl MessageOps for Message {
                 let mut items = array.array()?;
                 let magic = items.integer()? as u32;
                 let _false = items.bool()?;
-                // TODO: Handle this value.
-                assert_eq!(_false, false);
-                Ok(Message::AcceptVersion(version, magic))
+                if _false != false {
+                    // TODO: Handle this value.
+                    error!("unexpected diffusion mode");
+                }
+                match _false == false {
+                    true => Ok(Message::AcceptVersion(version, magic)),
+                    false => Ok(Message::Refuse),
+                }
             }
             2 => {
                 let reason = array.array()?;
