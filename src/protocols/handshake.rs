@@ -55,7 +55,7 @@ impl MessageOps for Message {
                 let _false = items.bool()?;
                 if _false != false {
                     // TODO: Handle this value.
-                    error!("unexpected diffusion mode");
+                    debug!("unexpected bool");
                 }
                 match _false == false {
                     true => Ok(Message::AcceptVersion(version, magic)),
