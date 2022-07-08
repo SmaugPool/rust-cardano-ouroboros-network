@@ -7,37 +7,20 @@
 // SPDX-License-Identifier: MPL-2.0
 //
 
-use byteorder::{
-    ByteOrder,
-    NetworkEndian,
-};
+use byteorder::{ByteOrder, NetworkEndian};
 use log::error;
 use log::trace;
 use std::{
     collections::HashMap,
     io,
-    sync::{
-        Arc,
-        Weak,
-    },
-    time::{
-        Duration,
-        Instant,
-    },
+    sync::{Arc, Weak},
+    time::{Duration, Instant},
 };
 use tokio::{
-    io::{
-        AsyncRead,
-        AsyncReadExt,
-        AsyncWrite,
-        AsyncWriteExt,
-    },
+    io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt},
     net::TcpStream,
     net::ToSocketAddrs,
-    sync::{
-        mpsc,
-        Mutex,
-    },
+    sync::{mpsc, Mutex},
     task,
 };
 
@@ -176,17 +159,18 @@ impl Connection {
                     let mut receiver = receiver.lock().await;
                     loop {
                         let mut header = [0u8; 8];
-                        receiver.read_exact(&mut header).await.unwrap();
-                        trace!("Header: {}", hex::encode(&header));
-                        let _timestamp = NetworkEndian::read_u32(&mut header[0..4]);
-                        let idx = NetworkEndian::read_u16(&header[4..6]) as u16 ^ 0x8000;
-                        let length = NetworkEndian::read_u16(&header[6..]) as usize;
-                        //trace!("Reading payload, idx={} length={}.", idx, length);
-                        let mut payload = vec![0u8; length];
-                        receiver.read_exact(&mut payload).await.unwrap();
-                        match channels.lock().unwrap().get(&idx) {
-                            Some(channel) => channel.send(payload).unwrap(),
-                            None => error!("Channel 0x{:04x} not attached.", idx),
+                        if let Ok(_) = receiver.read_exact(&mut header).await {
+                            trace!("Header: {}", hex::encode(&header));
+                            let _timestamp = NetworkEndian::read_u32(&mut header[0..4]);
+                            let idx = NetworkEndian::read_u16(&header[4..6]) as u16 ^ 0x8000;
+                            let length = NetworkEndian::read_u16(&header[6..]) as usize;
+                            //trace!("Reading payload, idx={} length={}.", idx, length);
+                            let mut payload = vec![0u8; length];
+                            receiver.read_exact(&mut payload).await.unwrap();
+                            match channels.lock().unwrap().get(&idx) {
+                                Some(channel) => channel.send(payload).unwrap(),
+                                None => error!("Channel 0x{:04x} not attached.", idx),
+                            }
                         }
                     }
                 })));

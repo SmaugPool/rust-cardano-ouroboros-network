@@ -19,7 +19,7 @@ use crate::{
     protocols::Values,
     Error,
 };
-use log::{debug, error};
+use log::debug;
 use serde_cbor::{Value, Value::*};
 use std::convert::TryFrom;
 
@@ -64,7 +64,7 @@ impl MessageOps for Message {
             }
             2 => {
                 let reason = array.array()?;
-                error!("Handshake refused with reason: {:?}", reason);
+                debug!("Handshake refused with reason: {:?}", reason);
                 Ok(Message::Refuse)
             }
             _ => return Err("Unexpected.".to_string()),
